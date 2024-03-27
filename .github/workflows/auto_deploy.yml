@@ -50,7 +50,7 @@ jobs:
 
           script: |
             docker pull ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
-            docker stop $(docker ps -a -q)
+            docker stop $(docker ps -a --filter "ancestor=rkskekfk/spak-backend:latest")
             docker run -d --log-driver=syslog -e DB_URL=${{ secrets.DB_URL }} -e DB_PASSWORD=${{ secrets.PASSWORD }} -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
             docker rm $(docker ps --filter 'status=exited' -a -q)
-            docker image prune -a -f
+            docker image prune -f --filter "label=org.label-schema.name=rkskekfk/spak-backend"
