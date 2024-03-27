@@ -1,4 +1,4 @@
-FROM openjdk:17-alpine
+FROM amazoncorretto:17.0.10-al2023-headless
 
 ARG JAR_FILE=/build/libs/AING-0.0.1-SNAPSHOT.jar
 
