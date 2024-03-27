@@ -39,9 +39,14 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
+<<<<<<< HEAD
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
+=======
+          username: ec2-user
+          key: ${{ secrets.PRIVATE_KEY }}
+>>>>>>> 29b041cd6ea19d4fac558cbb7b24aa2410d4211c
 
           script: |
             docker pull ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
