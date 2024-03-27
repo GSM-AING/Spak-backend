@@ -14,6 +14,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      DB_URL: ${{secrets.DB_URL}}
+      DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 17
@@ -29,6 +33,7 @@ jobs:
         run: ./gradlew build -x test
 
       - name: Docker build
+
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           docker build -t app .
@@ -46,6 +51,6 @@ jobs:
           script: |
             docker pull ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
             docker stop $(docker ps -a -q)
-            docker run -d --log-driver=syslog -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
+            docker run -d --log-driver=syslog -e DB_URL=${{ secrets.DB_URL }} -e DB_PASSWORD=${{ secrets.PASSWORD }} -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
             docker rm $(docker ps --filter 'status=exited' -a -q)
             docker image prune -a -f
