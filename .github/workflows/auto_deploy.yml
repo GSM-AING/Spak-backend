@@ -1,0 +1,56 @@
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master"  ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    env:
+      DB_URL: ${{secrets.DB_URL}}
+      DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+
+      - name: Docker build
+
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker build -t app .
+          docker tag app ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
+
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ubuntu
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: 22
+
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
+            docker stop $(docker ps -a --filter "ancestor=rkskekfk/spak-backend:latest")
+            docker run -d --log-driver=syslog -e DB_URL=${{ secrets.DB_URL }} -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/spak-backend:latest
+            docker rm $(docker ps --filter 'status=exited' -a -q)
+            docker image prune -f --filter "label=org.label-schema.name=rkskekfk/spak-backend"
